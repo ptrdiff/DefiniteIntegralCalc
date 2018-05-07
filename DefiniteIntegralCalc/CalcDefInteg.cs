@@ -133,9 +133,8 @@ namespace DefiniteIntegralCalc
             return Sum;
         }
 
-        public static double MethodCQFHalf(int n , double eps, bool isNewton = true)
+        public static double MethodCQFHalf(int n, int L, double eps, bool isNewton = true)
         {
-            int L = 2;
             double Sum1 = MethodCQF(n,isNewton);
             double Sum2 = MethodCQF(n * L,isNewton);
             double Sum3 = MethodCQF(n * L * L,isNewton);
@@ -164,7 +163,7 @@ namespace DefiniteIntegralCalc
             double Sum1 = MethodCQF(1,isNewton);
             double Sum2 = MethodCQF(2,isNewton);
             double Sum3 = MethodCQF(4,isNewton);
-            double m = 3;
+            double m = isNewton ? 3 : 6;
             double richardson = (Sum3 - Sum2) / (Math.Pow(L, m) - 1);
 
             while (Math.Abs(richardson) > eps)

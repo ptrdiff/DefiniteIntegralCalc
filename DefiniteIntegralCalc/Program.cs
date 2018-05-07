@@ -18,17 +18,17 @@ namespace DefiniteIntegralCalc
 
             Console.WriteLine();
 
-            Console.WriteLine(CalcDefInteg.NewtonCotesIQF());
-            Console.WriteLine(CalcDefInteg.MethodCQF(3));
-            Console.WriteLine(CalcDefInteg.MethodCQFHalf(1, 1e-6));
-            Console.WriteLine(CalcDefInteg.MethodCQFOptimal(1e-6));
+            Console.WriteLine("NewtonIQF: {0}", CalcDefInteg.NewtonCotesIQF());
+            Console.WriteLine("NewtonCQF: {0}", CalcDefInteg.MethodCQF(3));
+            Console.WriteLine("NewtonCQFHalf: {0}", CalcDefInteg.MethodCQFHalf(1, 2, 1e-6));
+            Console.WriteLine("NewtonCQFOptimal: {0}",CalcDefInteg.MethodCQFOptimal(1e-6));
 
             Console.WriteLine();
 
-            Console.WriteLine(CalcDefInteg.GaussIQF());
-            Console.WriteLine(CalcDefInteg.MethodCQF(3,false));
-            Console.WriteLine(CalcDefInteg.MethodCQFHalf(1, 1e-6,false));
-            Console.WriteLine(CalcDefInteg.MethodCQFOptimal(1e-6,false));
+            Console.WriteLine("GaussIQF: {0}", CalcDefInteg.GaussIQF());
+            Console.WriteLine("GaussCQF: {0}", CalcDefInteg.MethodCQF(3,false));
+            Console.WriteLine("GaussCQFHalf: {0}", CalcDefInteg.MethodCQFHalf(1, 2, 1e-6,false));
+            Console.WriteLine("GaussCQFOptimal: {0}", CalcDefInteg.MethodCQFOptimal(1e-6,false));
         }
     }
 }
