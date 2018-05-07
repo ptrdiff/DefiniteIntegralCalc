@@ -13,12 +13,22 @@ namespace DefiniteIntegralCalc
     {
         static void Main(string[] args)
         {
-            ////Console.WriteLine(CalcDefInteg.RiemannSum(100));
-            //Console.WriteLine(CalcDefInteg.NewtonCotesIQF());
-            //Console.WriteLine(CalcDefInteg.NewtonCotesCQF(2));
-            //Console.WriteLine(CalcDefInteg.NewtonCotesCQFHalf(1, 1e-6));
-            //Console.WriteLine(CalcDefInteg.NewtonCotesCQFOptimal(1e-6));
-            //Console.WriteLine(CalcDefInteg.RealResult());
+            //Console.WriteLine(CalcDefInteg.RiemannSum(100));
+            Console.WriteLine(CalcDefInteg.RealResult());
+
+            Console.WriteLine();
+
+            Console.WriteLine(CalcDefInteg.NewtonCotesIQF());
+            Console.WriteLine(CalcDefInteg.MethodCQF(3));
+            Console.WriteLine(CalcDefInteg.MethodCQFHalf(1, 1e-6));
+            Console.WriteLine(CalcDefInteg.MethodCQFOptimal(1e-6));
+
+            Console.WriteLine();
+
+            Console.WriteLine(CalcDefInteg.GaussIQF());
+            Console.WriteLine(CalcDefInteg.MethodCQF(3,false));
+            Console.WriteLine(CalcDefInteg.MethodCQFHalf(1, 1e-6,false));
+            Console.WriteLine(CalcDefInteg.MethodCQFOptimal(1e-6,false));
         }
     }
 }

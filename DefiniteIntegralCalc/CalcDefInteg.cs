@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using MathNet.Numerics;
+using MathNet.Numerics.LinearAlgebra;
 
 namespace DefiniteIntegralCalc
 {
@@ -9,6 +11,37 @@ namespace DefiniteIntegralCalc
         private static double Integral(double x) => (2 * Math.Cos(3.5 * x) * Math.Exp(5.0 * x / 3.0) + 3.0 * Math.Sin(1.5 * x) * Math.Exp(-4.0 * x) + 3.0) / (Math.Pow(x - 1.5, 1.0 / 5.0) * Math.Pow(2.3 - x, 0.0));
         private const double B = 2.3;
         private const double A = 1.5;
+        private const double Al = 0.2;
+
+        private static List<double> SolvePoly3(double a, double b, double c)
+        {
+            var Q = (a * a - 3 * b) / 9;
+            var R = (2 * a * a * a - 9 * a * b + 27 * c) / 54;
+
+            if (R * R < Q * Q * Q)
+            {
+                var t = Math.Acos(R / Math.Sqrt(Q * Q * Q)) / 3;
+                return new List<double> {-2.0 * Math.Sqrt(Q) * Math.Cos(t ) - a / 3,
+                                         -2.0 * Math.Sqrt(Q) * Math.Cos(t + (2 * Math.PI / 3)) - a / 3,
+                                         -2.0 * Math.Sqrt(Q) * Math.Cos(t - (2 * Math.PI / 3)) - a / 3,
+                };
+            }
+            else
+            {
+                var F = -R + Math.Sqrt(R * R - Q * Q * Q);
+                var A = Math.Sign(F) * Math.Pow(Math.Abs(F), 1.0 / 3.0);
+                if (A == 0.0)
+                {
+                    return new List<double> { -a / 3 };
+                }
+                else
+                {
+                    double B = Q / A, x1 = (A + B) - a / 3, x2 = -A - a / 3;
+                    return Math.Abs(x2 * (x2 * (x2 + a) + b) + c) < 1e-6 ? new List<double> { x1, x2 } : new List<double> { x1 };
+                }
+            }
+        }
+
 
         public static double RealResult()
         {
@@ -26,15 +59,21 @@ namespace DefiniteIntegralCalc
             return h * intSum;
         }
 
+
         public static double NewtonCotesIQF(double a = A, double b = B)
         {
             double x1 = a;
             double x2 = (a + b) / 2.0;
             double x3 = b;
 
-            double nu0 = (5.0 / 4.0) * (Math.Pow(b - 1.5, 4.0 / 5.0) - Math.Pow(a - 1.5, 4.0 / 5.0));
-            double nu1 = (5.0 / 72.0) * (Math.Pow(b - 1.5, 4.0 / 5.0) * (8 * b + 15) - Math.Pow(a - 1.5, 4.0 / 5.0) * (8 * a + 15));
-            double nu2 = (5.0 / 336.0) * (Math.Pow(b - 1.5, 4.0 / 5.0) * (24.0 * Math.Pow(b, 2.0) + 40.0 * b + 75) - Math.Pow(a - 1.5, 4.0 / 5.0) * (24.0 * Math.Pow(a, 2.0) + 40.0 * a + 75));
+            double nu(double i)
+            {
+                return (Math.Pow(b - 1.5,i - 0.2) - Math.Pow(a - 1.5, i - 0.2))/(i - 0.2);
+            }
+
+            double nu0 = nu(1.0);
+            double nu1 = nu(2.0) + 1.5 * nu0;
+            double nu2 = nu(3.0) + 3 * nu1 - 2.25 * nu0;
 
             double a1 = (nu2 - nu1 * (x2 + x3) + nu0 * x2 * x3) / ((x2 - x1) * (x3 - x1));
             double a2 = -(nu2 - nu1 * (x1 + x3) + nu0 * x1 * x3) / ((x2 - x1) * (x3 - x2));
@@ -43,26 +82,63 @@ namespace DefiniteIntegralCalc
             return a1 * Function(x1) + a2 * Function(x2) + a3 * Function(x3);
         }
 
-        public static double NewtonCotesCQF(int n)
+        public static double GaussIQF(double a = A, double b = B)
         {
+            double koeff = 1 / (1 - Al);
+            double koeffB = Math.Pow(b - A, 1 - Al);
+            double koeffA = Math.Pow(a - A, 1 - Al);
+            double[] nu = new double[6];
+            double nuGen(int n)
+            {
+                return koeff * (1.0 / (n / (1.0 - Al) + 1.0)) * (koeffB * Math.Pow(b, n) - koeffA * Math.Pow(a, n) + A * n * nu[n - 1]);
+            }
+
+            nu[0] = koeff * (koeffB - koeffA);
+            nu[1] = nuGen(1);
+            nu[2] = nuGen(2);
+            nu[3] = nuGen(3);
+            nu[4] = nuGen(4);
+            nu[5] = nuGen(5);
+
+            Vector<double> tmpa = Matrix<double>.Build.DenseOfArray(new double[,] { { nu[0], nu[1], nu[2] },
+                                                                                    { nu[1], nu[2], nu[3] },
+                                                                                    { nu[2], nu[3], nu[4] } })
+                               .Solve(Vector<double>.Build.DenseOfArray(new double[] { -nu[3], -nu[4], -nu[5] }));
+
+            var tmpX = SolvePoly3(tmpa[2], tmpa[1], tmpa[0]);
+
+            Vector<double> tmpA = Matrix<double>.Build.DenseOfArray(new double[,] {
+                { 1, 1, 1 }, { tmpX[0], tmpX[1],tmpX[2] },{ tmpX[0] * tmpX[0], tmpX[1] * tmpX[1],tmpX[2] * tmpX[2] }})
+                               .Solve(Vector<double>.Build.DenseOfArray(new double[] { nu[0], nu[1], nu[2] }));
+
+            return tmpA[0] * Function(tmpX[0]) + tmpA[1] * Function(tmpX[1]) + tmpA[2] * Function(tmpX[2]);
+        }
+
+
+        public static double MethodCQF(int n, bool isNewton = true)
+        {
+            Func<double,double,double> method = isNewton 
+                ? new Func<double, double, double>(NewtonCotesIQF) 
+                : new Func<double, double, double>(GaussIQF);
+
             double h = (B - A) / n;
             double Sum = 0;
             for (int i = 0; i < n; ++i)
             {
                 double a = A + i * h;
                 double b = A + (i + 1) * h;
-                Sum += NewtonCotesIQF(a,b);
+                Sum += method(a,b);
             }
 
             return Sum;
         }
 
-        public static double NewtonCotesCQFHalf(int n , double eps)
+        public static double MethodCQFHalf(int n , double eps, bool isNewton = true)
         {
             int L = 2;
-            double Sum1 = NewtonCotesCQF(n);
-            double Sum2 = NewtonCotesCQF(n * L);
-            double Sum3 = NewtonCotesCQF(n * L * L);
+            double Sum1 = MethodCQF(n,isNewton);
+            double Sum2 = MethodCQF(n * L,isNewton);
+            double Sum3 = MethodCQF(n * L * L,isNewton);
 
             double m = -Math.Log((Sum3 - Sum2) / (Sum2 - Sum1)) / Math.Log(L);
             double richardson = (Sum3 - Sum2) / (Math.Pow(L, m) - 1);
@@ -73,7 +149,7 @@ namespace DefiniteIntegralCalc
                 Sum1 = Sum2;
                 Sum2 = Sum3;
                 l *= L;
-                Sum3 = NewtonCotesCQF(l);
+                Sum3 = MethodCQF(l,isNewton);
 
                 m = -Math.Log((Sum3 - Sum2) / (Sum2 - Sum1)) / Math.Log(L);
                 richardson = (Sum3 - Sum2) / (Math.Pow(L, m) - 1);
@@ -82,12 +158,12 @@ namespace DefiniteIntegralCalc
             return Sum3 + richardson;
         }
 
-        public static double NewtonCotesCQFOptimal(double eps)
+        public static double MethodCQFOptimal(double eps,bool isNewton = true)
         {
             int L = 2;
-            double Sum1 = NewtonCotesCQF(1);
-            double Sum2 = NewtonCotesCQF(2);
-            double Sum3 = NewtonCotesCQF(4);
+            double Sum1 = MethodCQF(1,isNewton);
+            double Sum2 = MethodCQF(2,isNewton);
+            double Sum3 = MethodCQF(4,isNewton);
             double m = 3;
             double richardson = (Sum3 - Sum2) / (Math.Pow(L, m) - 1);
 
@@ -98,15 +174,12 @@ namespace DefiniteIntegralCalc
 
                 Sum1 = Sum2;
                 Sum2 = Sum3;
-                Sum3 = NewtonCotesCQF(n); 
+                Sum3 = MethodCQF(n,isNewton); 
 
                 richardson = (Sum3 - Sum2) / (Math.Pow(L, m) - 1);
             }
 
             return Sum3 + richardson;
         }
-
-
-
     }
 }
