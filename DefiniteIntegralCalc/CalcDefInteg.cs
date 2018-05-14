@@ -68,12 +68,12 @@ namespace DefiniteIntegralCalc
 
             double nu(double i)
             {
-                return (Math.Pow(b - 1.5,i - 0.2) - Math.Pow(a - 1.5, i - 0.2))/(i - 0.2);
+                return (Math.Pow(b - A,i - Al) - Math.Pow(a - A, i - Al))/(i - Al);
             }
 
             double nu0 = nu(1.0);
-            double nu1 = nu(2.0) + 1.5 * nu0;
-            double nu2 = nu(3.0) + 3 * nu1 - 2.25 * nu0;
+            double nu1 = nu(2.0) + A * nu0;
+            double nu2 = nu(3.0) + 2 * A * nu1 - A * A * nu0;
 
             double a1 = (nu2 - nu1 * (x2 + x3) + nu0 * x2 * x3) / ((x2 - x1) * (x3 - x1));
             double a2 = -(nu2 - nu1 * (x1 + x3) + nu0 * x1 * x3) / ((x2 - x1) * (x3 - x2));
